@@ -1,4 +1,4 @@
-`timescale 1ns/10ps
+ `timescale 1ns/10ps
 /*
  * IC Contest Computational System (CS)
 */
@@ -23,7 +23,7 @@ always@(posedge clk)begin
         sum  <=  sum - data[8] + X;                
         for ( i = 0 ; i < 8 ; i = i + 1)// shift
               data[i+1] <= data [i];                    
-    end                  
+   end                  
 end
 
 always@(*)begin  // output logic  
@@ -34,10 +34,10 @@ always@(*)begin  // output logic
 end  
 
 always@(negedge clk )begin  // output logic ( hold time  setup time)
-   Y <= ((Xappr << 3) + Xappr  + sum) >> 3 ;  // Y =  (Xappr * 9 + sum ) / 8 
+   Y <= ((Xappr *8) + Xappr  + sum) >> 3 ;  // Y =  (Xappr * 9 + sum ) / 8 
 end
   
 endmodule
 
-// compile        time: 10   area: 13608.055834
-// compile_ultra  time: 10   area: 11005.941606
+// compile        time: 10   area: 13424.736616
+

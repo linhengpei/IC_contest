@@ -10,7 +10,6 @@ output reg [9:0] Y;
 
 reg [7:0] data [8:0];
 reg [11:0] sum ;
-reg [7:0] Xavg ;
 reg [7:0] Xappr;
 
 reg state , next_state;
@@ -51,10 +50,9 @@ always@(posedge clk)begin
 end
 
 always@(*)begin  // output logic  
-  Xavg = sum / 9 ;
   Xappr = 0;
      for ( i = 0 ; i < 9 ; i = i + 1)
-        if(  Xappr <= data[i] & data[i] <= Xavg)
+        if(  Xappr <= data[i] & data[i] <= (sum/9))
                Xappr = data[i];  
 end  
 
@@ -62,6 +60,7 @@ always@(negedge clk )begin  // output logic ( hold time  set time)
    Y <= ((Xappr << 3) + Xappr  + sum) >> 3 ;  // Y =  (Xappr * 9 + sum ) / 8 
 end
 
-// compile time: 10 area: 14156.316032
+// compile        time: 10   area: 13647.096026
+// Compile_ultra  time: 10   area: 11632.282215
   
 endmodule

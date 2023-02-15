@@ -9,7 +9,6 @@ output reg busy;
 output reg valid;
 output reg [7:0] candidate;
 
-
 reg [1:0] state , next_state;
 parameter Idle      = 2'd0,
           Read      = 2'd1,
@@ -17,7 +16,6 @@ parameter Idle      = 2'd0,
           Output    = 2'd3;
 
 reg [3:0] X,Y;
-reg   counter;
 
 always@(posedge clk)begin  // FSM
     if(rst)
@@ -31,26 +29,22 @@ always@(*)begin  // next state logic
     case(state)
            Idle : next_state =   Read;
            Read : next_state = Calculate;
-           Calculate : if(X == 8 && Y== 8 && counter == 1) next_state = Output;
+           Calculate : if(X == 8 && Y== 8 ) next_state = Output;
            Output : next_state = Idle;
     endcase
 end
 
-wire signed [8:0] A;
-assign A =  radius[11:8] * radius[11:8] - (X - central[23:20]) * (X - central[23:20]) - (Y - central[19:16]) * (Y - central[19:16]);
-
-wire signed [8:0] B;
-assign B =  radius[7:4] * radius[7:4]  - (X - central[15:12]) * (X - central[15:12]) - (Y - central[11: 8]) * (Y - central[11: 8]) ;
-
-/*
-wire [3:0]x1,x2,y1,y2,r1,r2;
-assign x1 = central[23:20];
-assign y1 = central[19:16];
-assign x2 = central[15:12];
-assign y2 = central[11: 8];
-assign r1 = radius[11:8];
-assign r2 = radius[7:4];
-*/
+wire [7:0]r1_2 ,r2_2 ,x1_2 ,x2_2 ,y1_2 ,y2_2 ;
+assign r1_2 =  radius[11:8] * radius[11:8];
+assign r2_2 =  radius[7 :4] * radius[7 :4];
+assign x1_2 =  (X - central[23:20]) * (X - central[23:20]) ; 
+assign y1_2 =  (Y - central[19:16]) * (Y - central[19:16]) ; 
+assign x2_2 =  (X - central[15:12]) * (X - central[15:12]) ; 
+assign y2_2 =  (Y - central[11: 8]) * (Y - central[11: 8]) ;
+ 
+wire inside_A , inside_B;
+assign inside_A = ( r1_2 >= x1_2 + y1_2 )? 1 : 0;
+assign inside_B = ( r2_2 >= x2_2 + y2_2 )? 1 : 0; 
 
 always@(posedge clk)begin
     case(state)
@@ -59,46 +53,38 @@ always@(posedge clk)begin
                 valid <= 0;
                 X <= 1;
                 Y <= 1;
-                counter <= 0;
                 candidate <= 0;
                end
         Read : begin  // read data
                 busy <= 1;
                end
-        Calculate : begin
-                    case (counter)
-                        0: counter <= 1;  // use one cycle to wait A and B output correct                           
-                        1:begin                          
-                            case (mode)
-                                0: begin 
-                                    if( A >= 0  ) // inside A
-                                        candidate <=  candidate + 1; 
-                                    end  
-                                1: begin 
-                                    if( A >= 0 && B >= 0) // inside A and B
-                                        candidate <=  candidate + 1;
-                                    end 
-                                2: begin 
-                                    if((A >= 0 && B < 0) || (B >= 0 && A < 0))
-                                        candidate <=  candidate + 1;
-                                    end 
-                            endcase
-                                
-                            if(X == 8)begin
-                                X <= 1;
-                                Y <= Y + 1;
-                            end
-                            else begin
-                                X <= X + 1;
-                            end
-
-                            counter <= 0;
-                        end   
-                    endcase                        
+        Calculate : begin                             
+                        case (mode)
+                            0: begin 
+                                if( inside_A ) // inside A
+                                    candidate <=  candidate + 1; 
+                                end  
+                            1: begin 
+                                if( inside_A && inside_B ) // inside A and B
+                                    candidate <=  candidate + 1;
+                                end 
+                            2: begin 
+                               if( inside_A ^ inside_B )
+                                    candidate <=  candidate + 1;
+                                end 
+                        endcase
+                            
+                        if(X == 8)begin
+                            X <= 1;
+                            Y <= Y + 1;
+                        end
+                        else begin
+                            X <= X + 1;
+                        end                                     
                     end
            Output : begin
                     valid <= 1;
                     end
     endcase
 end
-endmodule  // area : 6394.105893
+endmodule  // area : 5609.907068
